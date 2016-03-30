@@ -101,6 +101,8 @@ awayStatsAdv <- vector('list', length(awayTeamsList))
 awayStatsTeam <- list()
 awayStatsTeamAdv <- list()
 
+boxUrlList2
+
 ## For loop to pull information about all teams that played yesterday
 
 for (i in 1:nrow(homeTeams)) {
@@ -155,18 +157,16 @@ for (i in 1:nrow(homeTeams)) {
                         homeCode,'_basic tbody td:nth-child(18), ',homeCode,'_basic tbody td:nth-child(19), ',
                         homeCode,'_basic tbody td:nth-child(20), ',homeCode,"_basic tbody td:nth-child(21)")) %>%
       html_text()
-    
     ## Remove missings with 0, and drop "did not play" text 
     ## Then create a dataframe for all possible data - note players that did not play must be addressed next
     
     homePlayerStats <- replace(homePlayerStats, homePlayerStats == "", "0")
-    homePlayerStats <- homePlayerStats[!homePlayerStats %in% "Did Not Play"]
+    homePlayerStats <- homePlayerStats[!homePlayerStats %in% c("Did Not Play", 'Player Suspended')]
     homePlayerStats <- data.frame(matrix(homePlayerStats, 
                                      ncol = 20, 
                                      nrow = (length(homePlayerStats) / 20), 
                                      byrow = T),
-                              stringsAsFactors = F)
-    
+                              stringsAsFactors = F)  
     ## Created to add 0s across all stats for players who did not play in a certain game
     
     zeroRow <- as.character(rep(0, 20))
@@ -187,6 +187,7 @@ for (i in 1:nrow(homeTeams)) {
     homePlayerStatsFull$team <- homeCode
     homePlayerStatsFull$opponent <- awayCode
     homePlayerStatsFull$date <- yesterday
+    homePlayerStatsFull$gameID <- paste0(homeCode, "_", awayCode, "_", yesterday)
     
     ############### HOME ADVANCED PLAYER STATS ###################
     
@@ -213,7 +214,7 @@ for (i in 1:nrow(homeTeams)) {
     ## Then create a dataframe for all possible data - note players that did not play must be addressed next
     
     homePlayerStatsAdv <- replace(homePlayerStatsAdv, homePlayerStatsAdv == "", "0")
-    homePlayerStatsAdv <- homePlayerStatsAdv[!homePlayerStatsAdv %in% "Did Not Play"]
+    homePlayerStatsAdv <- homePlayerStatsAdv[!homePlayerStatsAdv %in% c('Did Not Play', 'Player Suspended')]
     homePlayerStatsAdv <- data.frame(matrix(homePlayerStatsAdv, 
                                             ncol = 15, 
                                             nrow = (length(homePlayerStatsAdv) / 15), ## Note the change here
@@ -237,6 +238,7 @@ for (i in 1:nrow(homeTeams)) {
     homePlayerStatsAdvFull$team <- homeCode
     homePlayerStatsAdvFull$opponent <- awayCode
     homePlayerStatsAdvFull$date <- yesterday
+    homePlayerStatsAdvFull$gameID <- paste0(homeCode, "_", awayCode, "_", yesterday)
     
     ############# HOME TEAM STATS ####################
     
@@ -264,20 +266,21 @@ for (i in 1:nrow(homeTeams)) {
     homeTeamStatsFull$team <- homeCode
     homeTeamStatsFull$opponent <- awayCode
     homeTeamStatsFull$date <- yesterday
+    homeTeamStatsFull$gameID <- paste0(homeCode, "_", awayCode, "_", yesterday)
     
     ############# HOME ADVANCED TEAM STATS ####################
     
     homeTeamStatsAdv <- boxUrlList2[[i]] %>%
-      html_nodes(paste0(homeCode,'_basic .stat_total td:nth-child(2), ',homeCode,'_basic .stat_total td:nth-child(3), ',
-                        homeCode,'_basic .stat_total td:nth-child(4), ',homeCode,'_basic .stat_total td:nth-child(5), ',
-                        homeCode,'_basic .stat_total td:nth-child(6), ',homeCode,'_basic .stat_total td:nth-child(7), ',
-                        homeCode,'_basic .stat_total td:nth-child(8), ',homeCode,'_basic .stat_total td:nth-child(9), ',
-                        homeCode,'_basic .stat_total td:nth-child(10), ',homeCode,'_basic .stat_total td:nth-child(11), ',
-                        homeCode,'_basic .stat_total td:nth-child(12), ',homeCode,'_basic .stat_total td:nth-child(13), ',
-                        homeCode,'_basic .stat_total td:nth-child(14), ',homeCode,'_basic .stat_total td:nth-child(15), ',
-                        homeCode,'_basic .stat_total td:nth-child(16), ',homeCode,'_basic .stat_total td:nth-child(17), ',
-                        homeCode,'_basic .stat_total td:nth-child(18), ',homeCode,'_basic .stat_total td:nth-child(19), ',
-                        homeCode,'_basic .stat_total td:nth-child(20), ',homeCode,"_basic .stat_total td:nth-child(21)")) %>%
+      html_nodes(paste0(homeCode,'_advanced .stat_total td:nth-child(2), ',homeCode,'_advanced .stat_total td:nth-child(3), ',
+                        homeCode,'_advanced .stat_total td:nth-child(4), ',homeCode,'_advanced .stat_total td:nth-child(5), ',
+                        homeCode,'_advanced .stat_total td:nth-child(6), ',homeCode,'_advanced .stat_total td:nth-child(7), ',
+                        homeCode,'_advanced .stat_total td:nth-child(8), ',homeCode,'_advanced .stat_total td:nth-child(9), ',
+                        homeCode,'_advanced .stat_total td:nth-child(10), ',homeCode,'_advanced .stat_total td:nth-child(11), ',
+                        homeCode,'_advanced .stat_total td:nth-child(12), ',homeCode,'_advanced .stat_total td:nth-child(13), ',
+                        homeCode,'_advanced .stat_total td:nth-child(14), ',homeCode,'_advanced .stat_total td:nth-child(15), ',
+                        homeCode,'_advanced .stat_total td:nth-child(16), ',homeCode,'_advanced .stat_total td:nth-child(17), ',
+                        homeCode,'_advanced .stat_total td:nth-child(18), ',homeCode,'_advanced .stat_total td:nth-child(19), ',
+                        homeCode,'_advanced .stat_total td:nth-child(20), ',homeCode,"_advanced .stat_total td:nth-child(21)")) %>%
       html_text()
     
     ## Replace missing with 0s
@@ -287,10 +290,11 @@ for (i in 1:nrow(homeTeams)) {
     ## Merge in team code with stats, then add date and opponent
     
     homeTeamStatsAdvFull <- data.frame(matrix(homeTeamStatsAdv, nrow=1))
-    colnames(homeTeamStatsAdvFull) <- cols[2:length(cols)]
+    colnames(homeTeamStatsAdvFull) <- colsAdv[2:length(colsAdv)]
     homeTeamStatsAdvFull$team <- homeCode
     homeTeamStatsAdvFull$opponent <- awayCode
     homeTeamStatsAdvFull$date <- yesterday
+    homeTeamStatsAdvFull$gameID <- paste0(homeCode, "_", awayCode, "_", yesterday)
     
     ###############  AWAY PLAYER STATS ##############
     
@@ -321,7 +325,7 @@ for (i in 1:nrow(homeTeams)) {
     ## Then create a dataframe for all possible data - note players that did not play must be addressed next
     
     awayPlayerStats <- replace(awayPlayerStats, awayPlayerStats == "", "0")
-    awayPlayerStats <- awayPlayerStats[!awayPlayerStats %in% "Did Not Play"]
+    awayPlayerStats <- awayPlayerStats[!awayPlayerStats %in% c('Did Not Play', 'Player Suspended')]
     awayPlayerStats <- data.frame(matrix(awayPlayerStats, 
                                          ncol = 20, 
                                          nrow = (length(awayPlayerStats) / 20), 
@@ -345,6 +349,7 @@ for (i in 1:nrow(homeTeams)) {
     awayPlayerStatsFull$team <- awayCode
     awayPlayerStatsFull$opponent <- homeCode
     awayPlayerStatsFull$date <- yesterday
+    awayPlayerStatsFull$gameID <- paste0(homeCode, "_", awayCode, "_", yesterday)
     
     ################ AWAY ADVANCED PLAYER STATS ####################
     
@@ -367,7 +372,7 @@ for (i in 1:nrow(homeTeams)) {
     ## Then create a dataframe for all possible data - note players that did not play must be addressed next
     
     awayPlayerStatsAdv <- replace(awayPlayerStatsAdv, awayPlayerStatsAdv == "", "0")
-    awayPlayerStatsAdv <- awayPlayerStatsAdv[!awayPlayerStatsAdv %in% "Did Not Play"]
+    awayPlayerStatsAdv <- awayPlayerStatsAdv[!awayPlayerStatsAdv %in% c('Did Not Play', 'Player Suspended')]
     awayPlayerStatsAdv <- data.frame(matrix(awayPlayerStatsAdv, 
                                          ncol = 15, 
                                          nrow = (length(awayPlayerStatsAdv) / 15),  ## Note the change here
@@ -391,6 +396,7 @@ for (i in 1:nrow(homeTeams)) {
     awayPlayerStatsAdvFull$team <- awayCode
     awayPlayerStatsAdvFull$opponent <- homeCode
     awayPlayerStatsAdvFull$date <- yesterday
+    awayPlayerStatsAdvFull$gameID <- paste0(homeCode, "_", awayCode, "_", yesterday)
     
     ############# AWAY TEAM STATS ####################
     
@@ -418,20 +424,21 @@ for (i in 1:nrow(homeTeams)) {
     awayTeamStatsFull$team <- awayCode
     awayTeamStatsFull$opponent <- homeCode
     awayTeamStatsFull$date <- yesterday
+    awayTeamStatsFull$gameID <- paste0(homeCode, "_", awayCode, "_", yesterday)
     
     ############# AWAY TEAM STATS ####################
     
     awayTeamStatsAdv <- boxUrlList2[[i]] %>%
-      html_nodes(paste0(awayCode,'_basic .stat_total td:nth-child(2), ',awayCode,'_basic .stat_total td:nth-child(3), ',
-                        awayCode,'_basic .stat_total td:nth-child(4), ',awayCode,'_basic .stat_total td:nth-child(5), ',
-                        awayCode,'_basic .stat_total td:nth-child(6), ',awayCode,'_basic .stat_total td:nth-child(7), ',
-                        awayCode,'_basic .stat_total td:nth-child(8), ',awayCode,'_basic .stat_total td:nth-child(9), ',
-                        awayCode,'_basic .stat_total td:nth-child(10), ',awayCode,'_basic .stat_total td:nth-child(11), ',
-                        awayCode,'_basic .stat_total td:nth-child(12), ',awayCode,'_basic .stat_total td:nth-child(13), ',
-                        awayCode,'_basic .stat_total td:nth-child(14), ',awayCode,'_basic .stat_total td:nth-child(15), ',
-                        awayCode,'_basic .stat_total td:nth-child(16), ',awayCode,'_basic .stat_total td:nth-child(17), ',
-                        awayCode,'_basic .stat_total td:nth-child(18), ',awayCode,'_basic .stat_total td:nth-child(19), ',
-                        awayCode,'_basic .stat_total td:nth-child(20), ',awayCode,"_basic .stat_total td:nth-child(21)")) %>%
+      html_nodes(paste0(awayCode,'_advanced .stat_total td:nth-child(2), ',awayCode,'_advanced .stat_total td:nth-child(3), ',
+                        awayCode,'_advanced .stat_total td:nth-child(4), ',awayCode,'_advanced .stat_total td:nth-child(5), ',
+                        awayCode,'_advanced .stat_total td:nth-child(6), ',awayCode,'_advanced .stat_total td:nth-child(7), ',
+                        awayCode,'_advanced .stat_total td:nth-child(8), ',awayCode,'_advanced .stat_total td:nth-child(9), ',
+                        awayCode,'_advanced .stat_total td:nth-child(10), ',awayCode,'_advanced .stat_total td:nth-child(11), ',
+                        awayCode,'_advanced .stat_total td:nth-child(12), ',awayCode,'_advanced .stat_total td:nth-child(13), ',
+                        awayCode,'_advanced .stat_total td:nth-child(14), ',awayCode,'_advanced .stat_total td:nth-child(15), ',
+                        awayCode,'_advanced .stat_total td:nth-child(16), ',awayCode,'_advanced .stat_total td:nth-child(17), ',
+                        awayCode,'_advanced .stat_total td:nth-child(18), ',awayCode,'_advanced .stat_total td:nth-child(19), ',
+                        awayCode,'_advanced .stat_total td:nth-child(20), ',awayCode,"_advanced .stat_total td:nth-child(21)")) %>%
       html_text()
     
     ## Replace missing with 0s
@@ -441,10 +448,11 @@ for (i in 1:nrow(homeTeams)) {
     ## Merge in team code with stats, then add date and opponent
     
     awayTeamStatsAdvFull <- data.frame(matrix(awayTeamStatsAdv, nrow=1))
-    colnames(awayTeamStatsAdvFull) <- cols[2:length(cols)]
+    colnames(awayTeamStatsAdvFull) <- colsAdv[2:length(colsAdv)]
     awayTeamStatsAdvFull$team <- awayCode
     awayTeamStatsAdvFull$opponent <- homeCode
     awayTeamStatsAdvFull$date <- yesterday
+    awayTeamStatsAdvFull$gameID <- paste0(homeCode, "_", awayCode, "_", yesterday)
     
     ## Put home & away team & player stats into a list
     
@@ -480,15 +488,61 @@ playerStatsAdvFin <- rbind(homeStatsAdvDF, awayStatsAdvDF)
 teamStatsFin <- rbind(homeStatsTeamDF, awayStatsTeamDF)
 teamStatsAdvFin <- rbind(homeStatsTeamAdvDF, awayStatsTeamAdvDF)
 
+## Get opponent points into team stats file
+
+finalScoreFile <- teamStatsFin[,c('opponent', 'gameID', 'PTS')]
+colnames(finalScoreFile)[3] <- 'PTSAllowed'
+teamStatsFin <- merge(teamStatsFin, finalScoreFile, 
+                      by.x=c('team', 'gameID'), 
+                      by.y=c('opponent', 'gameID'))
+
+## Merge team basic & advanced stats then clean file
+
+finalTeamFile <- merge(teamStatsFin, teamStatsAdvFin[,c(2:16,19)],
+                       by.x = c('team', 'gameID'), by.y = c('team', 'gameID'))
+finalTeamFile <- finalTeamFile[,c(2,1,23,24,3:22,25:39)]
+
+## Convert data into proper format, create custom outcome & difference variables for team stats
+
+fact <- sapply(finalTeamFile, is.factor)
+finalTeamFile[fact] <- lapply(finalTeamFile[fact], function(x) as.numeric(as.character(x)))
+finalTeamFile$`+/-` <- finalTeamFile$PTS - finalTeamFile$PTSAllowed
+finalTeamFile$Outcome <- ifelse(finalTeamFile$`+/-` > 0, 1, 0)
+char <- sapply(finalTeamFile, is.character)
+finalTeamFile[char] <- lapply(finalTeamFile[char], as.factor)
+
+## Merge player basic & advanced stats
+
+finalPlayerFile <- merge(playerStatsFin, playerStatsAdvFin[,c(1,3:17,20)],
+                         by.x = c('gameID', 'team', 'Starters'), 
+                         by.y = c('gameID', 'team', 'Starters'))
+finalPlayerFile <- finalPlayerFile[,c(1,2,24,25,3:23,26:39)]
+
+## Convert MP to minutes + seconds, get data in proper format
+
+library(splitstackshape)
+
+finalPlayerFile <- as.data.frame(cSplit(finalPlayerFile, 'MP', sep=':'))
+finalPlayerFile$MP_2[is.na(finalPlayerFile$MP_2)] <- 0
+finalPlayerFile$MP <- round(finalPlayerFile$MP_1 + (finalPlayerFile$MP_2/60),2)
+finalPlayerFile <- finalPlayerFile[,c(1:5,41,6:38)]
+head(finalPlayerFile)
+fact2 <- sapply(finalPlayerFile, is.character)
+fact2[1:5] <- F
+finalPlayerFile[fact2] <- lapply(finalPlayerFile[fact2], function(x) as.numeric(as.character(x)))
+char2 <- sapply(finalPlayerFile, is.character)
+finalPlayerFile[char2] <- lapply(finalPlayerFile[char2], as.factor)
+
 ## TO DO
 
-## Replace 0s in team +/- with actual outcome
-## Create binary outcome variable for win/loss in team stats
-## Pull historic data
+## Pull historic data - loop over all dates in regular season
+## Create one file that adds in data from new day
+## Turn into function so files don't persist - input should be WD, also dates for historic function
 ## Figure out way to automate process and store elsewhere
-## Merge basic & advanced stats
-## Move team name to front in team stats
-## Convert data into proper format (numeric)
+## Pull in fanduel/yahoo/draftkings information for each day
+## Create models predicting all relevant variables fanduel, draftkings, & yahoo
+## Create optimization problem between cost & max points expected for each site
+## Also create team predictions
 
 setwd('~/Documents/Northwestern/498/NBA Scraped')
 
@@ -498,7 +552,5 @@ csvSaver <- function(x, type) {
   write.csv(x, paste0(type, "_", yesterday, '.csv'), row.names = F)
 }
 
-csvSaver(playerStatsFin, 'player')
-csvSaver(playerStatsAdvFin, 'playerAdv')
-csvSaver(teamStatsFin, 'team')
-csvSaver(teamStatsAdvFin, 'teamAdv')
+csvSaver(finalPlayerFile, 'player')
+csvSaver(finalTeamFile, 'team')
